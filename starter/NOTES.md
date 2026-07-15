@@ -1,0 +1,5 @@
+My best run got 1.9704 bpb, which is way better than the baseline 2.3718. I didn't really mess with the tokenizer much  I just focused on making the model bigger and training it better.
+The thing that helped most was bumping n_embd from 160 to 192. That gave the model more room to learn without going over the 2M param limit. I also added gradient clipping and increased batch size to 16, which made training way less noisy.
+For the learning rate, I used a short warmup and then let it stay high in the middle before dropping off gently at the end. That worked better than keeping it flat the whole time.
+Weight tying and AdamW actually didn't help when I tried them early on, but once I got the other stuff right they started working. I guess it's like modern LLM training  you need the whole pipeline to work together, not just one trick.
+My final model probably did well because I balanced capacity with a stable training setup, and I only had 2,000 steps so every update had to count. I also tried deeper models  but they didn't help as much as I expected . In the end, the best result came from scaling width and fixing the optimization rather than going deeper.

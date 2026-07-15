@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LLM Handout Training Summary</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.6;
+      margin: 2rem auto;
+      max-width: 980px;
+      color: #1f2937;
+      background: #f8fafc;
+      padding: 0 1rem 2rem;
+    }
+    h1, h2, h3 { color: #0f172a; }
+    .card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.5rem;
+    }
+    th, td {
+      border: 1px solid #e5e7eb;
+      padding: 0.6rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #f1f5f9; }
+    .highlight {
+      color: #b45309;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Language Model Training Summary</h1>
+  <p>This report summarizes the work recorded in <strong>NOTES.md</strong>, <strong>RUNLOG.md</strong>, and the implementation in <strong>model.py</strong> and <strong>train.py</strong>. No separate <strong>nodes.md</strong> file was present in the workspace, so the summary below uses the available experiment notes and the actual architecture used for training.</p>
+
+  <div class="card">
+    <h2>Objective</h2>
+    <p>The goal was to train a small GPT-style language model under the assignment constraints: CPU-only training, at most 2,000 optimizer steps, at most 2,000,000 parameters, and using only the provided training corpus. The primary evaluation metric was <strong>dev bits-per-byte (bpb)</strong>, where lower is better.</p>
+  </div>
+
+  <div class="card">
+    <h2>Architecture and Key Parameters</h2>
+    <table>
+      <thead>
+        <tr><th>Component</th><th>Setting</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Tokenizer</td><td>Byte-level tokenizer (lossless UTF-8 bytes)</td></tr>
+        <tr><td>Vocabulary size</td><td>256</td></tr>
+        <tr><td>Context / block size</td><td>128</td></tr>
+        <tr><td>Embedding dimension</td><td>192</td></tr>
+        <tr><td>Layers</td><td>4</td></tr>
+        <tr><td>Attention heads</td><td>4</td></tr>
+        <tr><td>Dropout</td><td>0.0</td></tr>
+        <tr><td>Positional encoding</td><td>RoPE (rotary positional embeddings)</td></tr>
+        <tr><td>Weight tying</td><td>Enabled</td></tr>
+        <tr><td>Optimizer</td><td>AdamW</td></tr>
+        <tr><td>Learning rate</td><td>6e-4</td></tr>
+        <tr><td>Batch size</td><td>16</td></tr>
+        <tr><td>Gradient clipping</td><td>Max norm 1.0</td></tr>
+        <tr><td>Training steps</td><td>2,000</td></tr>
+        <tr><td>Parameter count</td><td>Within the 2,000,000 parameter cap</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>What Changed Across the Experiments</h2>
+    <ul>
+      <li><strong>Early experiments</strong> tested weight tying, deeper layers, new initialization, and alternative optimizers. Most of these did not help enough or made the model worse.</li>
+      <li><strong>Embedding width</strong> was the first change that clearly improved performance, showing that model capacity mattered more than simply adding depth.</li>
+      <li><strong>Training stability</strong> improved with gradient clipping and a larger batch size, which made updates less noisy.</li>
+      <li><strong>Learning-rate behavior</strong> was refined with a warmup-and-decay schedule, and the final setup used a stronger optimizer configuration that worked better once the rest of the setup had been improved.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Best Result</h2>
+    <p>The strongest run achieved a <span class="highlight">dev bpb of 1.9704</span>. This is substantially better than the baseline score of <strong>2.3718</strong>.</p>
+    <p>Why this is the best result:</p>
+    <ul>
+      <li>It produced the lowest validation bpb among the tested runs.</li>
+      <li>It stayed within the required capacity and step constraints.</li>
+      <li>It combined better model capacity, a stable optimization setup, and more reliable training dynamics.</li>
+      <li>It suggests that the most important gains came from <strong>width, stability, and optimizer tuning</strong> rather than from simply making the network deeper.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Why This Setup Is the Strongest</h2>
+    <p>The final architecture and training recipe performed well because it balanced <strong>capacity</strong> with <strong>stability</strong>. The wider embedding dimension gave the model more representational space, while gradient clipping and a larger batch size reduced unstable updates. The final optimizer choice and learning-rate schedule helped the model use its limited training budget more effectively.</p>
+    <p>In short, the best run was not just a bigger model; it was a better-trained model.</p>
+  </div>
+
+  <div class="card">
+    <h2>Machine Work vs. Human Work</h2>
+    <p>Roughly, the project was about <strong>85% machine-done</strong> and <strong>15% human-done</strong>.</p>
+    <ul>
+      <li><strong>Machine-done</strong>: training runs, evaluation, metric logging, checkpoint saving, repeated optimization steps, and numerical comparison across runs.</li>
+      <li><strong>Human-done</strong>: selecting hypotheses, deciding which changes to try, interpreting the results, and choosing the final configuration based on the evidence.</li>
+    </ul>
+    <p>This ratio is reasonable because the actual learning and scoring were automated by the training pipeline, while the overall strategy and final judgment were guided by human reasoning.</p>
+  </div>
+
+  <div class="card">
+    <h2>Final Conclusion</h2>
+    <p>The best-performing model is the one that achieved <strong>1.9704 bpb</strong> through a combination of stronger representational capacity and a more stable training recipe. The main lesson from the experiments is that, in this constrained setting, <strong>improving width and optimization quality mattered more than simply increasing depth</strong>.</p>
+  </div>
+</body>
+</html>
